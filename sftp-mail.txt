@@ -1,0 +1,45 @@
+v_lock="v_t.lock"
+if [ -e $v_lock ]
+then
+        echo "Another instance is running!"
+        exit 0
+fi
+echo "STARTING PROCESS: `date`"
+`touch $v_lock`
+
+source_dir=Source Directory
+backup=Backup Directory/backup
+Date=`date +%Y%m%d`
+#files=`ls -ltr *.pdf *.PDF | awk '{print $9}'`
+
+cd $source_dir
+
+files=`ls -ltr *[.pdf,.PDF] | grep -v "backup" | ls -p | grep -v "/$"`
+
+if [[ "$files" ]] ; then
+
+        echo "$files"
+
+        echo "$files" > $Date.csv
+
+        mailx -s "Subject" -a /$Date.csv -r Email Address <<EOF
+Dear  Team,
+
+Mail Body
+
+Yours Sincerely
+XYZ
+EOF
+
+        rm -rf $Date.csv
+fi
+
+for i in `ls -ltr *.pdf | awk '{print $9}'`
+do
+        sftp User@Hostname <<< $'cd in\n lcd Root Directory\n mput *.pdf\n mput *.PDF\n  bye'
+        mkdir -p $backup/$Date
+        mv $i $backup/$Date
+done
+
+rm $v_lock
+echo "ENDING PROCESS: `date`"
